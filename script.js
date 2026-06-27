@@ -128,3 +128,59 @@ document.querySelectorAll(".quote-banner").forEach((banner) => {
     banner.appendChild(star);
   }
 });
+
+/* ---------- Celebration burst & sound ---------- */
+function launchCelebrationBurst(x, y) {
+  const icons = ["🎉", "🎊", "✨", "🚗", "🛣️", "🎺"];
+  for (let i = 0; i < 24; i++) {
+    const piece = document.createElement("span");
+    piece.className = "celebration-piece";
+    piece.textContent = icons[i % icons.length];
+    piece.style.left = x + "px";
+    piece.style.top = y + "px";
+    piece.style.setProperty("--dx", `${(Math.random() - 0.5) * 220}px`);
+    piece.style.setProperty("--dy", `${-120 - Math.random() * 180}px`);
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 2200);
+  }
+}
+
+function playCelebrationSound() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+
+  const ctx = new AudioCtx();
+  const now = ctx.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5];
+
+  notes.forEach((note, index) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = index % 2 === 0 ? "triangle" : "sine";
+    osc.frequency.setValueAtTime(note, now + index * 0.1);
+    gain.gain.setValueAtTime(0.0001, now + index * 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + index * 0.1 + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.1 + 0.24);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now + index * 0.1);
+    osc.stop(now + index * 0.1 + 0.25);
+  });
+
+  setTimeout(() => ctx.close(), 700);
+}
+
+const celebrateBtn = document.getElementById("celebrate-btn");
+if (celebrateBtn) {
+  celebrateBtn.addEventListener("click", () => {
+    const rect = celebrateBtn.getBoundingClientRect();
+    launchCelebrationBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    playCelebrationSound();
+    celebrateBtn.textContent = "Celebration launched! 🎉";
+    celebrateBtn.disabled = true;
+    setTimeout(() => {
+      celebrateBtn.textContent = "Launch the celebration! 🎺";
+      celebrateBtn.disabled = false;
+    }, 2200);
+  });
+}
